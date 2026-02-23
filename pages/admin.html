@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Cây Cảnh - Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+
+        .form-container {
+            background: white;
+            padding: 20px;
+            max-width: 450px;
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        /* Định dạng riêng cho ô mô tả */
+        textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+        }
+
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #219150;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="form-container">
+        <h2>Thêm Cây Mới</h2>
+
+        <label>Tên sản phẩm:</label>
+        <input type="text" id="name" placeholder="Ví dụ: Cây Kim Ngân">
+
+        <label>Giá tiền:</label>
+        <input type="number" id="price" placeholder="Ví dụ: 150000">
+
+        <label>Tên file ảnh:</label>
+        <input type="text" id="image" placeholder="Ví dụ: kim-ngan.jpg">
+
+        <label>Danh mục:</label>
+        <select id="category">
+            <option value="phong-thuy">Cây Cảnh Phong Thủy</option>
+            <option value="trong-nha">Cây Cảnh Trong Nhà</option>
+            <option value="de-ban">Cây Cảnh Để Bàn</option>
+            <option value="van-phong">Cây Cảnh Văn Phòng</option>
+            <option value="loai-to">Cây Cảnh Loại To</option>
+            <option value="sen-da">Cây Cảnh Sen Đá</option>
+            <option value="thuy-sinh">Cây Thủy Sinh</option>
+            <option value="xuong-rong">Xương Rồng Cảnh</option>
+            <option value="cong-trinh">Cây Công Trình</option>
+        </select>
+
+        <label>Mô tả chi tiết:</label>
+        <textarea id="description" placeholder="Nhập ý nghĩa, cách chăm sóc..."></textarea>
+
+        <button onclick="saveProduct()">Lưu Vào Hệ Thống</button>
+    </div>
+
+    <script>
+        // Kiểm tra xem đã đăng nhập chưa ngay khi vào trang
+        if (sessionStorage.getItem("adminLoggedIn") !== "true") {
+            alert("Vui lòng đăng nhập để truy cập trang quản trị!");
+            window.location.href = "login.html"; // Đá người dùng về trang login
+        }
+        async function saveProduct() {
+            try {
+                const name = document.getElementById('name').value;
+                const price = document.getElementById('price').value;
+                const image = document.getElementById('image').value;
+                const category = document.getElementById('category').value;
+                // 1. Lấy dữ liệu từ ô textarea
+                const description = document.getElementById('description').value;
+
+                if (!name || isNaN(price) || !image) {
+                    alert("Vui lòng điền đầy đủ thông tin!");
+                    return;
+                }
+
+                // 2. Gom dữ liệu vào object (Key phải khớp 100% với Entity Java)
+                const product = {
+                    name: name,
+                    price: parseFloat(price),
+                    img: image, // Bạn nên kiểm tra xem Java dùng 'img' hay 'image'
+                    category: category,
+                    description: description // Gửi mô tả lên
+                };
+
+                const response = await fetch('http://localhost:8080/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                });
+
+                if (response.ok) {
+                    alert("Thêm cây thành công!");
+                    location.reload();
+                } else {
+                    alert("Lỗi Server: " + response.status);
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("KHÔNG KẾT NỐI ĐƯỢC BACKEND!");
+            }
+        }
+    </script>
+</body>
+
+</html>

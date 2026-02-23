@@ -1,34 +1,33 @@
-<div class="container">
-    <h1>Giỏ hàng của bạn</h1>
+<div class="container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+    <h1 style="text-align: center; color: #27ae60;">GIỎ HÀNG CỦA BẠN</h1>
+    <hr>
     
     <div id="cart-content">
-        </div>
-
-    <div class="cart-summary" style="margin-top: 20px; text-align: right;">
-        <h3 id="total-price-display">Tổng tiền: 0đ</h3>
-        <button class="btn-buy-now" onclick="checkout()">Thanh toán ngay</button>
-        <br>
-        <a href="#" data-link="home" style="display:inline-block; margin-top:10px;">Tiếp tục mua sắm</a>
+        <p style="text-align: center; padding: 30px;">Đang tải giỏ hàng...</p>
     </div>
-</div>
 
-<div id="checkout-section" style="margin-top: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-    <h3>THÔNG TIN GIAO HÀNG</h3>
-    <form id="checkout-form">
-        <div style="margin-bottom: 10px;">
-            <label>Họ và tên:</label><br>
-            <input type="text" id="cus-name" required style="width: 100%; padding: 8px; margin-top: 5px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label>Số điện thoại:</label><br>
-            <input type="tel" id="cus-phone" required style="width: 100%; padding: 8px; margin-top: 5px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label>Địa chỉ nhận hàng:</label><br>
-            <textarea id="cus-address" required style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
-        </div>
-        <button type="submit" style="background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">
-            XÁC NHẬN ĐẶT HÀNG
-        </button>
-    </form>
+    <div id="checkout-section" style="display: none; margin-top: 30px; padding: 25px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+        <h3 style="text-align: center; color: #333;">THÔNG TIN GIAO HÀNG</h3>
+        <form id="checkout-form">
+            <div style="margin-bottom: 15px;">
+                <label>Họ và tên:</label>
+                <input type="text" id="cus-name" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Số điện thoại:</label>
+                <input type="tel" id="cus-phone" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Địa chỉ nhận hàng:</label>
+                <textarea id="cus-address" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; height: 80px;"></textarea>
+            </div>
+            <button type="submit" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px;">
+                XÁC NHẬN ĐẶT HÀNG
+            </button>
+        </form>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="#" data-link="home" style="color: #666; text-decoration: none;">← Tiếp tục mua sắm</a>
+    </div>
 </div>

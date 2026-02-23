@@ -1,105 +1,33 @@
 /* ============================================================
-   1. DỮ LIỆU GIẢ LẬP (DATABASE MOCKUP)
+   1. DỮ LIỆU DATABASE
    ============================================================ */
-const fakeProducts = [
-    // 1. Cây Phong Thủy
-    {
-        id: 1,
-        name: "Cây Kim Tiền",
-        price: "200.000đ",
-        img: "images/kim-tien.jpg",
-        category: "phong-thuy"
-    },
-
-    // 2. Cây Trong Nhà
-    {
-        id: 4,
-        name: "Cây Lan Ý",
-        price: "130.000đ",
-        img: "images/lan-y.jpg",
-        category: "trong-nha"
-    },
-
-    // 3. Cây Để Bàn
-    {
-        id: 6,
-        name: "Cây May Mắn",
-        price: "85.000đ",
-        img: "images/may-man.jpg",
-        category: "de-ban"
-    },
-
-
-    // 4. Cây Văn Phòng
-    {
-        id: 8,
-        name: "Cây Hạnh Phúc",
-        price: "320.000đ",
-        img: "images/cay-hanh-phuc.jpg",
-        category: "van-phong"
-    },
-
-    // 5. Cây Loại To
-    {
-        id: 10,
-        name: "Cây Bàng Singapore",
-        price: "550.000đ",
-        img: "images/bang-sin.jpg",
-        category: "loai-to"
-    },
-
-    // 6. Sen Đá
-    {
-        id: 12,
-        name: "Sen Đá Nâu",
-        price: "45.000đ",
-        img: "images/sen-da-nau.jpg",
-        category: "sen-da"
-    },
-
-
-    // 7. Thủy Sinh
-    {
-        id: 14,
-        name: "Cây Phú Quý Thủy Sinh",
-        price: "140.000đ",
-        img: "images/phu-quy.jpg",
-        category: "thuy-sinh"
-    },
-
-
-    // 8. Xương Rồng
-    {
-        id: 16,
-        name: "Xương Rồng Trứng Chim",
-        price: "65.000đ",
-        img: "images/xr-trung-chim.jpg",
-        category: "xuong-rong"
-    },
-
-
-    // 9. Cây Công Trình
-    {
-        id: 19,
-        name: "Cây Osaka Vàng",
-        price: "1.200.000đ",
-        img: "images/osaka.jpg",
-        category: "cong-trinh"
-    }
-];
-
+let realProducts = [];
 // Lấy giỏ hàng từ trình duyệt nếu có, nếu không thì để mảng rỗng
 let cart = JSON.parse(localStorage.getItem('myCart')) || [];
-
+// Hàm lấy dữ liệu từ Backend Java
+async function fetchProductsFromBackend() {
+    try {
+        const response = await fetch('http://localhost:8080/api/products');
+        realProducts = await response.json();
+        console.log("Dữ liệu đã tải thành công:", realProducts);
+    } catch (error) {
+        console.error("Lỗi kết nối Backend:", error);
+        // Có thể thêm dữ liệu dự phòng ở đây nếu muốn
+    }
+}
 /* ============================================================
    2. CÁC HÀM TIỆN ÍCH (UTILITIES)
    ============================================================ */
 
-function priceToNumber(priceStr) {
-    return parseInt(priceStr.replace(/\./g, '').replace('đ', '')) || 0;
+function getPriceNumber(price) {
+    if (typeof price === 'number') return price;
+    if (typeof price === 'string') {
+        return parseInt(price.replace(/\./g, '').replace('đ', '')) || 0;
+    }
+    return 0;
 }
 
-function numberToPrice(num) {
+function formatPrice(num) {
     return num.toLocaleString('vi-VN') + "đ";
 }
 
@@ -111,12 +39,62 @@ function saveCart() {
 /* ============================================================
    3. CÁC HÀM XỬ LÝ GIỎ HÀNG (LOGIC)
    ============================================================ */
+function renderCartPage() {
+    const cartContainer = document.getElementById('cart-content');
+    if (!cartContainer) return;
+
+    if (cart.length === 0) {
+        cartContainer.innerHTML = `
+            <div style="text-align:center; padding: 50px;">
+                <p style="font-size: 18px; color: #666;">Giỏ hàng của bạn đang trống.</p>
+                <button onclick="navigateTo('home')" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">Mua sắm ngay</button>
+            </div>`;
+        return;
+    }
+
+    let totalAll = 0;
+    let html = `<table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">`;
+
+    cart.forEach((item, index) => {
+        const price = getPriceNumber(item.price);
+        const qty = item.quantity || 1;
+        const subTotal = price * qty;
+        totalAll += subTotal;
+
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px;"><img src="images/${item.img}" width="60" height="60" style="object-fit: cover; border-radius: 5px;"></td>
+                <td style="padding: 10px;"><strong>${item.name}</strong><br><small>${formatPrice(price)}</small></td>
+                <td style="padding: 10px;">
+                    <button onclick="changeQuantity(${index}, -1)" style="width:25px;">-</button>
+                    <span style="margin: 0 8px;">${qty}</span>
+                    <button onclick="changeQuantity(${index}, 1)" style="width:25px;">+</button>
+                </td>
+                <td style="padding: 10px; text-align: right;">${formatPrice(subTotal)}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <button onclick="removeFromCart(${index})" style="color: red; border: none; background: transparent; cursor: pointer;">Xóa</button>
+                </td>
+            </tr>`;
+    });
+
+    html += `</table>`;
+    html += `
+        <div style="text-align: right; padding: 20px; background: #fefefe; border: 1px dashed #ccc;">
+            <h3 style="margin: 0;">Tổng cộng: <span style="color: #e74c3c;">${formatPrice(totalAll)}</span></h3>
+            <button onclick="document.getElementById('checkout-section').style.display='block'; window.scrollTo(0, document.body.scrollHeight);" 
+                    style="margin-top: 15px; background: #2980b9; color: white; border: none; padding: 12px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                THANH TOÁN NGAY
+            </button>
+        </div>`;
+
+    cartContainer.innerHTML = html;
+}
 
 function addToCart(productId) {
-    const product = fakeProducts.find(p => p.id === productId);
+    const product = realProducts.find(p => p.id == productId);
     if (product) {
         // Tìm xem sản phẩm đã có trong giỏ chưa
-        const existingItem = cart.find(item => item.id === productId);
+        const existingItem = cart.find(item => item.id == productId);
 
         if (existingItem) {
             existingItem.quantity = (existingItem.quantity || 1) + 1;
@@ -178,89 +156,39 @@ function updateCartBadge() {
 /* ============================================================
    4. CÁC HÀM HIỂN THỊ GIAO DIỆN (RENDERING)
    ============================================================ */
-
-function renderProducts(filterCategory = 'all') {
+function renderProducts(filterCategory = 'all', customList = null) {
     const container = document.getElementById('product-container');
     if (!container) return;
 
-    const productsToShow = filterCategory === 'all' ?
-        fakeProducts :
-        fakeProducts.filter(p => p.category === filterCategory);
+    // Ưu tiên dùng customList nếu có (dành cho tìm kiếm), nếu không thì mới lọc theo category
+    let productsToShow = customList ? customList :
+        (filterCategory === 'all' ? realProducts : realProducts.filter(p => p.category === filterCategory));
 
     let html = "";
     if (productsToShow.length === 0) {
-        html = "<p style='padding:20px;'>Chưa có sản phẩm nào trong mục này.</p>";
+        html = "<p style='padding:20px;'>Không tìm thấy sản phẩm nào phù hợp...</p>";
     } else {
         productsToShow.forEach(product => {
+            const imagePath = `images/${product.img}`;
+            const displayPrice = formatPrice(getPriceNumber(product.price));
+
             html += `
-                <div class="product-card">
-                    <div class="product-img">
-                        <img src="${product.img}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/200'">
-                    </div>
-                    <div class="product-info">
-                        <h3>${product.name}</h3>
-                        <span class="price">${product.price}</span>
-                        <button class="btn-add" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
-                    </div>
-                </div>`;
+    <div class="product-card">
+        <div class="product-img" onclick="viewDetail(${product.id})" style="cursor:pointer">
+            <img src="${imagePath}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/200'">
+        </div>
+        
+        <div class="product-info">
+            <h3 onclick="viewDetail(${product.id})" style="cursor:pointer">${product.name}</h3>
+            
+            <span class="price">${displayPrice}</span>
+            
+            <button class="btn-add" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
+        </div>
+    </div>`;
         });
     }
     container.innerHTML = html;
-}
-
-function renderCartPage() {
-    const cartContainer = document.getElementById('cart-content');
-    const totalPriceDisplay = document.getElementById('total-price-display');
-    if (!cartContainer) return;
-
-    if (cart.length === 0) {
-        cartContainer.innerHTML = "<div style='padding:20px;'><h3>Giỏ hàng đang trống.</h3></div>";
-        if (totalPriceDisplay) totalPriceDisplay.innerText = "Tổng tiền: 0đ";
-        return;
-    }
-
-    let totalMoney = 0;
-    let html = `<table class="cart-table" style="width:100%; border-collapse: collapse; margin-top:20px;">
-                <thead>
-                    <tr style="border-bottom: 2px solid #27ae60; background: #f9f9f9;">
-                        <th style="text-align:left; padding: 15px;">Sản phẩm</th>
-                        <th>Số lượng</th>
-                        <th>Giá</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-    cart.forEach((item, index) => {
-        const itemQuantity = item.quantity || 1;
-        totalMoney += priceToNumber(item.price) * itemQuantity;
-
-        html += `
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px; display: flex; align-items: center; gap: 15px;">
-                    <img src="${item.img}" width="60" onerror="this.src='https://via.placeholder.com/60'">
-                    <span style="font-weight:bold;">${item.name}</span>
-                </td>
-                <td style="text-align: center;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <button onclick="changeQuantity(${index}, -1)" style="width:25px; cursor:pointer;">-</button>
-                        <span>${itemQuantity}</span>
-                        <button onclick="changeQuantity(${index}, 1)" style="width:25px; cursor:pointer;">+</button>
-                    </div>
-                </td>
-                <td style="text-align: center;">${item.price}</td>
-                <td style="text-align: center;">
-                    <button onclick="removeFromCart(${index})" class="btn-delete" style="color:red; cursor:pointer; border:none; background:none;">Xóa</button>
-                </td>
-            </tr>`;
-    });
-
-    html += `</tbody></table>`;
-    cartContainer.innerHTML = html;
-
-    if (totalPriceDisplay) {
-        totalPriceDisplay.innerText = "Tổng tiền: " + numberToPrice(totalMoney);
-    }
 }
 /* ============================================================
    5. BỘ MÁY ĐIỀU HƯỚNG & KHỞI CHẠY
@@ -279,7 +207,7 @@ async function loadComponent(elementId, filePath) {
 
 async function navigateTo(pageName) {
     const viewport = document.getElementById('app-viewport');
-    
+
     // Gom tất cả danh mục sản phẩm vào đây
     const productCategories = ['phong-thuy', 'trong-nha', 'de-ban', 'van-phong', 'loai-to', 'sen-da', 'thuy-sinh', 'xuong-rong', 'cong-trinh'];
 
@@ -338,7 +266,9 @@ async function navigateTo(pageName) {
             } else if (isPolicyCat) {
                 renderPolicyDetail(pageName);
             } else if (pageName === 'cart') {
-                renderCartPage();
+                setTimeout(renderCartPage(), 100);
+            } else if (pageName === 'product-detail') {
+                renderProductDetail(window.currentProductId);
             }
         });
 
@@ -347,11 +277,18 @@ async function navigateTo(pageName) {
         viewport.innerHTML = "<h2>Trang đang cập nhật...</h2>";
     }
 }
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Tải Header/Footer
     loadComponent('main-header', 'components/header-component.html');
     loadComponent('main-footer', 'components/footer-component.html');
+
+    // 2. QUAN TRỌNG: Đợi lấy dữ liệu từ Java xong mới chạy tiếp
+    await fetchProductsFromBackend();
+
+    // 3. Hiển thị trang chủ
     navigateTo('home');
 
+    // 4. Lắng nghe click điều hướng
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[data-link]');
         if (target) {
@@ -388,61 +325,25 @@ document.addEventListener('submit', function (e) {
 });
 
 // 2. Hàm thực hiện tìm kiếm và hiển thị
-async function performSearch(keyword) {
-    // Bước A: Chuyển về trang chủ để lấy khung hiển thị (id="product-container")
-    // Dùng await để đợi trang chủ nạp xong hoàn toàn rồi mới lọc
-    await navigateTo('home');
 
-    // Bước B: Lọc sản phẩm từ mảng fakeProducts
-    const results = fakeProducts.filter(p =>
+async function performSearch(keyword) {
+    await navigateTo('home'); // Quay về trang chủ để có container
+
+    const results = realProducts.filter(p =>
         p.name.toLowerCase().includes(keyword) ||
         p.category.toLowerCase().includes(keyword)
     );
 
-    // Bước C: Chờ một nhịp nhỏ để DOM ổn định rồi vẽ kết quả
     requestAnimationFrame(() => {
-        const container = document.getElementById('product-container');
         const title = document.getElementById('category-title');
         const banner = document.getElementById('home-banner');
-        const newsletter = document.querySelector('.newsletter');
-
-        // Ẩn các thành phần thừa để tập trung vào kết quả tìm kiếm
         if (banner) banner.style.display = 'none';
-        if (newsletter) newsletter.style.display = 'none';
+        if (title) title.innerText = `KẾT QUẢ TÌM KIẾM: "${keyword.toUpperCase()}"`;
 
-        if (title) {
-            title.innerText = `KẾT QUẢ TÌM KIẾM: "${keyword.toUpperCase()}"`;
-        }
-
-        if (results.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                    <p>Rất tiếc, shop chưa có cây "${keyword}". Bạn thử tìm từ khác nhé!</p>
-                </div>`;
-        } else {
-            // Vẽ danh sách sản phẩm tìm được
-            let html = "";
-            results.forEach(product => {
-                html += `
-                    <div class="product-card">
-                        <div class="product-img">
-                            <img src="${product.img}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/200'">
-                        </div>
-                        <div class="product-info">
-                            <h3>${product.name}</h3>
-                            <span class="price">${product.price}</span>
-                            <button class="btn-add" onclick="addToCart(${product.id})">Thêm vào giỏ</button>
-                        </div>
-                    </div>`;
-            });
-            container.innerHTML = html;
-        }
+        // Gọi lại hàm render với danh sách kết quả
+        renderProducts(null, results);
     });
 }
-
-
-
-
 
 /* ============================================================
    XỬ LÝ ĐẶT HÀNG (CHECKOUT LOGIC)
@@ -551,4 +452,51 @@ function renderPolicyDetail(policyId) {
         document.getElementById('policy-title').innerText = data.title;
         document.getElementById('policy-content').innerHTML = data.content;
     }
+}
+
+/* ============================================================
+   XỬ LÝ TRANG CHI TIẾT SẢN PHẨM
+   ============================================================ */
+
+function renderProductDetail(productId) {
+    // 1. Tìm cây trong danh sách realProducts dựa trên ID
+    const product = realProducts.find(p => p.id == productId);
+
+    if (!product) {
+        document.getElementById('app-viewport').innerHTML = "<h2>Không tìm thấy sản phẩm!</h2>";
+        return;
+    }
+
+    // 2. Chờ một chút để HTML kịp load rồi đổ dữ liệu vào
+    setTimeout(() => {
+        const desc = document.getElementById('detail-desc');
+
+        // Đổ dữ liệu mô tả từ Java gửi về vào đây
+        if (desc) {
+            // Biến các dấu xuống dòng \n thành thẻ <br> trong HTML
+            desc.innerHTML = (product.description || "Đang cập nhật...").replace(/\n/g, '<br>');
+        }
+        const img = document.getElementById('detail-img');
+        const name = document.getElementById('detail-name');
+        const price = document.getElementById('detail-price');
+        const category = document.getElementById('detail-category');
+        const btnAdd = document.getElementById('btn-add-detail');
+        if (img) img.src = `images/${product.img}`;
+        if (name) name.innerText = product.name;
+        if (price) price.innerText = formatPrice(getPriceNumber(product.price));
+        if (category) category.innerText = "Danh mục: " + product.category;
+
+        // Gán sự kiện click cho nút thêm vào giỏ ngay tại đây
+        if (btnAdd) {
+            btnAdd.onclick = () => addToCart(product.id);
+        }
+    }, 50);
+}
+
+function viewDetail(productId) {
+    // Bước A: Lưu cái ID cây khách vừa bấm vào một "biến toàn cục" để dùng sau
+    window.currentProductId = productId;
+
+    // Bước B: Gọi hàm điều hướng sang trang chi tiết mà bạn đã có sẵn
+    navigateTo('product-detail');
 }
